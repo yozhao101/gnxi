@@ -157,6 +157,8 @@ def _create_parser():
   parser.add_argument('--encoding', default=0, type=int, help='[0=JSON, 1=BYTES, 2=PROTO, 3=ASCII, 4=JSON_IETF]')
   parser.add_argument('--qos', default=0, type=int, help='')
   parser.add_argument('--use_alias', action='store_true', help='use alias')
+  parser.add_argument('--trigger_mem_spike', action='store_true', help='trigger memory spike on gNMI server side'
+                      'without explicitly closing TCP connections')
   parser.add_argument('--prefix', default='', help='gRPC path prefix (default: none)')
   return parser
 
@@ -403,12 +405,14 @@ def gen_request(paths, opt, prefix):
     yield mysubreq
 
 
-def subscribe_start(stub, options, req_iterator):
+def subscribe_start(stub, options, req_iterator, exit_early):
   """ RPC Start for Subscribe reqeust
   Args:
       stub: (class) gNMI Stub used to build the secure channel.
       options: (dict) Command line argument passed for subscribe reqeust.
       req_iterator: gNMI Subscribe Request from gen_request.
+      exit_early: create TCP connections with gNMI server without explicitly 
+                  closeing it to simulate memory spike on server side.
   Returns:
       Start Subscribe and printing response of gNMI Subscribe Response.
   """
@@ -416,6 +420,8 @@ def subscribe_start(stub, options, req_iterator):
   max_update_count = options["update_count"]
   try:
       responses = stub.Subscribe(req_iterator, options['timeout'], metadata=metadata)
+      if exit_early:
+         return 
       update_count = 0
       for response in responses:
           print('{0} response received: '.format(datetime.datetime.now()))
@@ -465,11 +471,21 @@ def main():
   user = args['username']
   password = args['password']
   form = args['format']
+  trigger_mem_spike = args['trigger_mem_spike']
   paths = _parse_path(_path_names(xpath))
   kwargs = {'root_cert': root_cert, 'cert_chain': cert_chain,
             'private_key': private_key}
   certs = _open_certs(**kwargs)
   creds = _build_creds(target, port, get_cert, certs, notls)
+
+  exit_early = False
+  if trigger_mem_spike:
+    exit_early = True
+    while True:
+      stub = _create_stub(creds, target, port, host_override)
+      request_iterator = gen_request(paths, args, prefix)
+      subscribe_start(stub, args, request_iterator, exit_early)
+
   stub = _create_stub(creds, target, port, host_override)
   if mode == 'get':
     print('Performing GetRequest, encoding=JSON_IETF', 'to', target,
@@ -503,7 +519,7 @@ def main():
     print('The SetRequest response is below\n' + '-'*25 + '\n', response)
   elif mode == 'subscribe':
     request_iterator = gen_request(paths, args, prefix)
-    subscribe_start(stub, args, request_iterator)
+    subscribe_start(stub, args, request_iterator, exit_early)
 
 
 if __name__ == '__main__':
