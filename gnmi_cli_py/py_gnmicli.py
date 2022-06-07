@@ -92,76 +92,76 @@ def _create_parser():
                                      '\npython py_gnmicli.py -t 127.0.0.1 -p 8080 -x \'/access-points/'
                                      'access-point[hostname=test-ap]/\' -rcert ~/certs/target-cert.crt -o '
                                      'openconfig.example.com')
-    parser.add_argument('-t', '--target', type=str, help='The gNMI Target',
-                        required=True)
-    parser.add_argument('-p', '--port', type=str, help='The port the gNMI Target '
-                        'is listening on', required=True)
-    parser.add_argument('-user', '--username', type=str, help='Username to use'
+    parser.add_argument('-t', '--target', type = str, help ='The gNMI Target',
+                        required = True)
+    parser.add_argument('-p', '--port', type = str, help = 'The port the gNMI Target '
+                        'is listening on', required = True)
+    parser.add_argument('-user', '--username', type = str, help = 'Username to use'
                         'when establishing a gNMI Channel to the Target',
-                        required=False)
-    parser.add_argument('-pass', '--password', type=str, help='Password to use'
+                        required = False)
+    parser.add_argument('-pass', '--password', type = str, help = 'Password to use'
                         'when establishing a gNMI Channel to the Target',
-                        required=False)
+                        required = False)
     parser.add_argument('-m', '--mode', choices=['get', 'set-update', 'set-replace', 'set-delete', 'subscribe'],
-                        help='Mode of operation when interacting with network element.'
+                        help = 'Mode of operation when interacting with network element.'
                         ' Default=get. If set, it can be either value \nor JSON '
-                        'file (prepend filename with "@")', default='get')
-    parser.add_argument('-val', '--value', type=str, help='Value for SetRequest.'
+                        'file (prepend filename with "@")', default = 'get')
+    parser.add_argument('-val', '--value', type = str, help = 'Value for SetRequest.'
                         '\nCan be Leaf value or JSON file. If JSON file, prepend'
                         ' with "@"; eg "@interfaces.json".',
-                        required=False)
-    parser.add_argument('-pkey', '--private_key', type=str, help='Fully'
+                        required = False)
+    parser.add_argument('-pkey', '--private_key', type = str, help = 'Fully'
                         'quallified path to Private key to use when establishing'
-                        'a gNMI Channel to the Target', required=False)
-    parser.add_argument('-rcert', '--root_cert', type=str, help='Fully quallified'
+                        'a gNMI Channel to the Target', required = False)
+    parser.add_argument('-rcert', '--root_cert', type = str, help = 'Fully quallified'
                         'Path to Root CA to use when building the gNMI Channel',
-                        required=False)
-    parser.add_argument('-cchain', '--cert_chain', type=str, help='Fully'
+                        required = False)
+    parser.add_argument('-cchain', '--cert_chain', type = str, help = 'Fully'
                         'quallified path to Certificate chain to use when'
                         'establishing a gNMI Channel to the Target',
-                        default=None,
-                        required=False)
-    parser.add_argument('-g', '--get_cert', help='Obtain certificate from gNMI '
+                        default = None,
+                        required = False)
+    parser.add_argument('-g', '--get_cert', help = 'Obtain certificate from gNMI '
                         'Target when establishing secure gRPC channel.',
-                        required=False,
-                        action='store_true')
-    parser.add_argument('-x', '--xpath', type=str, help='The gNMI path utilized'
-                        'in the GetRequest or Subscirbe', required=True)
-    parser.add_argument('-xt', '--xpath_target', type=str, help='The gNMI prefix'
-                        'target in the GetRequest or Subscirbe', default=None,
-                        required=False)
-    parser.add_argument('-o', '--host_override', type=str, help='Use this as '
+                        required = False,
+                        action = 'store_true')
+    parser.add_argument('-x', '--xpath', type = str, help = 'The gNMI path utilized'
+                        'in the GetRequest or Subscirbe', required = True)
+    parser.add_argument('-xt', '--xpath_target', type = str, help = 'The gNMI prefix'
+                        'target in the GetRequest or Subscirbe', default = None,
+                        required = False)
+    parser.add_argument('-o', '--host_override', type = str, help = 'Use this as '
                         'Targets hostname/peername when checking it\'s'
                         'certificate CN. You can check the cert with:\nopenssl '
                         'x509 -in certificate.crt -text -noout',
-                        required=False)
-    parser.add_argument('-f', '--format', type=str, action='store', help='Format '
+                        required = False)
+    parser.add_argument('-f', '--format', type = str, action = 'store', help = 'Format '
                         'of the GetResponse to be printed. Default=JSON.',
-                        choices=['json', 'protobuff'], default='json',
-                        required=False)
-    parser.add_argument('-V', '--version', help='Print program version',
-                        action='store_true', required=False)
-    parser.add_argument('-d', '--debug', help='Enable gRPC debugging',
-                        required=False, action='store_true')
-    parser.add_argument('-n', '--notls', help='gRPC insecure mode',
-                        required=False, action='store_true')
-    parser.add_argument('--interval', default=10000, type=int,
-                        help='sample interval in millisecond (default: 10000ms)')
-    parser.add_argument('--timeout', type=int, help='subscription'
+                        choices = ['json', 'protobuff'], default = 'json',
+                        required = False)
+    parser.add_argument('-V', '--version', help = 'Print program version',
+                        action = 'store_true', required = False)
+    parser.add_argument('-d', '--debug', help = 'Enable gRPC debugging',
+                        required = False, action = 'store_true')
+    parser.add_argument('-n', '--notls', help = 'gRPC insecure mode',
+                        required = False, action = 'store_true')
+    parser.add_argument('--interval', default = 10000, type = int,
+                        help = 'sample interval in millisecond (default: 10000ms)')
+    parser.add_argument('--timeout', type = int, help = 'subscription'
                         'duration in seconds (default: none)')
-    parser.add_argument('--heartbeat', default=0, type=int, help='heartbeat interval (default: None)')
-    parser.add_argument('--aggregate', action='store_true', help='allow aggregation')
-    parser.add_argument('--suppress', action='store_true', help='suppress redundant')
-    parser.add_argument('--submode', default=2, type=int,
-                        help='subscription mode [0=TARGET_DEFINED, 1=ON_CHANGE, 2=SAMPLE]')
-    parser.add_argument('--update_count', default=0, type=int, help='Max number of streaming updates to receive. 0 means no limit.')
-    parser.add_argument('--subscribe_mode', default=0, type=int, help='[0=STREAM, 1=ONCE, 2=POLL]')
-    parser.add_argument('--encoding', default=0, type=int, help='[0=JSON, 1=BYTES, 2=PROTO, 3=ASCII, 4=JSON_IETF]')
-    parser.add_argument('--qos', default=0, type=int, help='')
-    parser.add_argument('--use_alias', action='store_true', help='use alias')
-    parser.add_argument('--trigger_mem_spike', action='store_true', help='trigger memory spike on gNMI server side'
+    parser.add_argument('--heartbeat', default = 0, type = int, help = 'heartbeat interval (default: None)')
+    parser.add_argument('--aggregate', action = 'store_true', help = 'allow aggregation')
+    parser.add_argument('--suppress', action = 'store_true', help = 'suppress redundant')
+    parser.add_argument('--submode', default = 2, type = int,
+                        help = 'subscription mode [0=TARGET_DEFINED, 1=ON_CHANGE, 2=SAMPLE]')
+    parser.add_argument('--update_count', default = 0, type = int, help = 'Max number of streaming updates to receive. 0 means no limit.')
+    parser.add_argument('--subscribe_mode', default = 0, type = int, help = '[0=STREAM, 1=ONCE, 2=POLL]')
+    parser.add_argument('--encoding', default = 0, type = int, help = '[0=JSON, 1=BYTES, 2=PROTO, 3=ASCII, 4=JSON_IETF]')
+    parser.add_argument('--qos', default = 0, type = int, help = '')
+    parser.add_argument('--use_alias', action = 'store_true', help = 'use alias')
+    parser.add_argument('--trigger_mem_spike', action = 'store_true', help = 'trigger memory spike on gNMI server side'
                         'without explicitly closing TCP connections')
-    parser.add_argument('--prefix', default='', help='gRPC path prefix (default: none)')
+    parser.add_argument('--prefix', default = '', help = 'gRPC path prefix (default: none)')
 
     return parser
 
@@ -240,7 +240,7 @@ def _create_stub(creds, target, port, host_override):
     else:
         print("Inscure channel is created ...")
         channel = gnmi_pb2_grpc.grpc.insecure_channel(target + ':' + port)
-
+  
     return gnmi_pb2_grpc.gNMIStub(channel)
 
 
@@ -283,7 +283,7 @@ def _get_val(json_value):
             set_json = json.loads(six.moves.builtins.open(json_value.strip('@'), 'rb').read())
         except (IOError, ValueError) as e:
             raise JsonReadError('Error while loading JSON: %s' % str(e))
-
+        
         val.json_ietf_val = json.dumps(set_json).encode()
         return val
 
@@ -460,14 +460,14 @@ def subscribe_start(stub, options, req_iterator):
             if response.HasField('sync_response'):
                 print(str(response))
             elif response.HasField('error'):
-                print('gNMI Error ' + str(response.error.code) +
-                      ' received\n' + str(response.error.message) + str(response.error))
+                print('gNMI Error '+str(response.error.code)+\
+                      ' received\n'+str(response.error.message) + str(response.error))
             elif response.HasField('update'):
                 print(response)
                 update_count = update_count+1
             else:
                 print('Unknown response received:\n'+str(response))
-
+          
             if max_update_count != 0 and update_count == max_update_count:
                 print("Max update count reached {0}".format(update_count))
                 break
