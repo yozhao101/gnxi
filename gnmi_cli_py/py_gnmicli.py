@@ -476,17 +476,16 @@ def main():
   creds = _build_creds(target, port, get_cert, certs, notls)
 
   if trigger_mem_spike:
-     while True:
-            try:
-                stub = _create_stub(creds, target, port, host_override)
-                request_iterator = gen_request(paths, args, prefix)
-                subscribe_start(stub, args, request_iterator)
-            except grpc.RpcError as err:
-                if err.code() == grpc.StatusCode.UNAVAILABLE:
-                    print("Receives an exception '{}' indicating gNMI server shuts down and exiting ..."
-                          .format(err.details()))
-                    sys.exit(1)
-
+    while True:
+      try:
+        stub = _create_stub(creds, target, port, host_override)
+        request_iterator = gen_request(paths, args, prefix)
+        subscribe_start(stub, args, request_iterator)
+      except grpc.RpcError as err:
+        if err.code() == grpc.StatusCode.UNAVAILABLE:
+          print("Receives an exception '{}' indicating gNMI server shuts down and exiting ..."
+                .format(err.details()))
+          sys.exit(1)
 
   stub = _create_stub(creds, target, port, host_override)
   if mode == 'get':
