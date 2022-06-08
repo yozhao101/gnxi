@@ -405,14 +405,12 @@ def gen_request(paths, opt, prefix):
     yield mysubreq
 
 
-def subscribe_start(stub, options, req_iterator, exit_early):
+def subscribe_start(stub, options, req_iterator):
   """ RPC Start for Subscribe reqeust
   Args:
       stub: (class) gNMI Stub used to build the secure channel.
       options: (dict) Command line argument passed for subscribe reqeust.
       req_iterator: gNMI Subscribe Request from gen_request.
-      exit_early: create TCP connections with gNMI server without explicitly 
-                  closeing it to simulate memory spike on server side.
   Returns:
       Start Subscribe and printing response of gNMI Subscribe Response.
   """
@@ -420,8 +418,6 @@ def subscribe_start(stub, options, req_iterator, exit_early):
   max_update_count = options["update_count"]
   try:
       responses = stub.Subscribe(req_iterator, options['timeout'], metadata=metadata)
-      if exit_early:
-         return 
       update_count = 0
       for response in responses:
           print('{0} response received: '.format(datetime.datetime.now()))
@@ -441,8 +437,9 @@ def subscribe_start(stub, options, req_iterator, exit_early):
             break
   except KeyboardInterrupt:
       print("Subscribe Session stopped by user.")
-  except grpc.RpcError as x:
-      print("grpc.RpcError received:\n%s" %x)
+  except grpc.RpcError as err:
+      print("Received an exception from server side and error message is: '{}'.".format(err))
+      raise err
   except Exception as err:
       print(err)
 
@@ -478,13 +475,18 @@ def main():
   certs = _open_certs(**kwargs)
   creds = _build_creds(target, port, get_cert, certs, notls)
 
-  exit_early = False
   if trigger_mem_spike:
-    exit_early = True
-    while True:
-      stub = _create_stub(creds, target, port, host_override)
-      request_iterator = gen_request(paths, args, prefix)
-      subscribe_start(stub, args, request_iterator, exit_early)
+     while True:
+            try:
+                stub = _create_stub(creds, target, port, host_override)
+                request_iterator = gen_request(paths, args, prefix)
+                subscribe_start(stub, args, request_iterator)
+            except grpc.RpcError as err:
+                if err.code() == grpc.StatusCode.UNAVAILABLE:
+                    print("Receives an exception '{}' indicating gNMI server shuts down and exiting ..."
+                          .format(err.details()))
+                    sys.exit(1)
+
 
   stub = _create_stub(creds, target, port, host_override)
   if mode == 'get':
@@ -519,7 +521,7 @@ def main():
     print('The SetRequest response is below\n' + '-'*25 + '\n', response)
   elif mode == 'subscribe':
     request_iterator = gen_request(paths, args, prefix)
-    subscribe_start(stub, args, request_iterator, exit_early)
+    subscribe_start(stub, args, request_iterator)
 
 
 if __name__ == '__main__':
