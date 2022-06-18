@@ -157,7 +157,7 @@ def _create_parser():
   parser.add_argument('--encoding', default=0, type=int, help='[0=JSON, 1=BYTES, 2=PROTO, 3=ASCII, 4=JSON_IETF]')
   parser.add_argument('--qos', default=0, type=int, help='')
   parser.add_argument('--use_alias', action='store_true', help='use alias')
-  parser.add_argument('--trigger_mem_spike', action='store_true', help='trigger memory spike on gNMI server side'
+  parser.add_argument('--create_infinite_connections', action='store_true', help='trigger memory spike on gNMI server side'
                       'without explicitly closing TCP connections')
   parser.add_argument('--prefix', default='', help='gRPC path prefix (default: none)')
   return parser
@@ -439,7 +439,7 @@ def subscribe_start(stub, options, req_iterator):
       print("Subscribe Session stopped by user.")
   except grpc.RpcError as err:
       print("Received an exception from server side and error message is: '{}'.".format(err))
-      raise err
+      raise
   except Exception as err:
       print(err)
 
@@ -468,14 +468,14 @@ def main():
   user = args['username']
   password = args['password']
   form = args['format']
-  trigger_mem_spike = args['trigger_mem_spike']
+  create_infinite_connections = args['create_infinite_connections']
   paths = _parse_path(_path_names(xpath))
   kwargs = {'root_cert': root_cert, 'cert_chain': cert_chain,
             'private_key': private_key}
   certs = _open_certs(**kwargs)
   creds = _build_creds(target, port, get_cert, certs, notls)
 
-  if trigger_mem_spike:
+  if create_infinite_connections:
     while True:
       try:
         stub = _create_stub(creds, target, port, host_override)
@@ -483,7 +483,7 @@ def main():
         subscribe_start(stub, args, request_iterator)
       except grpc.RpcError as err:
         if err.code() == grpc.StatusCode.UNAVAILABLE:
-          print("Receives an exception '{}' indicating gNMI server shuts down and exiting ..."
+          print("Receives an exception '{}' indicating gNMI server is shut down ..."
                 .format(err.details()))
           sys.exit(1)
 
