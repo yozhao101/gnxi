@@ -479,11 +479,20 @@ def main():
     while True:
       try:
         stub = _create_stub(creds, target, port, host_override)
-        request_iterator = gen_request(paths, args, prefix)
-        subscribe_start(stub, args, request_iterator)
+        if mode == "get":
+          response = _get(stub, paths, user, password, prefix)
+        elif mode == "set-update":
+          response = _set(stub, paths, 'update', user, password, json_value)
+        elif mode == "set-replace":
+          response = _set(stub, paths, 'replace', user, password, json_value)
+        elif mode == "set-delete":
+          response = _set(stub, paths, 'delete', user, password, json_value)
+        elif mode == "subscribe":
+          request_iterator = gen_request(paths, args, prefix)
+          subscribe_start(stub, args, request_iterator)
       except grpc.RpcError as err:
         if err.code() == grpc.StatusCode.UNAVAILABLE:
-          print("Receives an exception '{}' indicating gNMI server is shut down ..."
+          print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
                 .format(err.details()))
           sys.exit(1)
 
