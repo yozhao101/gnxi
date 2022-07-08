@@ -475,61 +475,50 @@ def main():
   certs = _open_certs(**kwargs)
   creds = _build_creds(target, port, get_cert, certs, notls)
 
-  if create_infinite_connections:
-    while True:
-      try:
-        stub = _create_stub(creds, target, port, host_override)
-        if mode == "get":
-          response = _get(stub, paths, user, password, prefix)
-        elif mode == "set-update":
-          response = _set(stub, paths, 'update', user, password, json_value)
-        elif mode == "set-replace":
-          response = _set(stub, paths, 'replace', user, password, json_value)
-        elif mode == "set-delete":
-          response = _set(stub, paths, 'delete', user, password, json_value)
-        elif mode == "subscribe":
-          request_iterator = gen_request(paths, args, prefix)
-          subscribe_start(stub, args, request_iterator)
-      except grpc.RpcError as err:
-        if err.code() == grpc.StatusCode.UNAVAILABLE:
-          print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
-                .format(err.details()))
-          sys.exit(1)
+  while True:
+    try:
+      stub = _create_stub(creds, target, port, host_override)
+      if mode == 'get':
+        print('Performing GetRequest, encoding=JSON_IETF', 'to', target,
+              ' with the following gNMI Path\n', '-'*25, '\n', paths)
+        response = _get(stub, paths, user, password, prefix)
+        print('The GetResponse is below\n' + '-'*25 + '\n')
+        if form == 'protobuff':
+          print(response)
+        elif response.notification[0].update[0].val.json_ietf_val:
+          print(json.dumps(json.loads(response.notification[0].update[0].val.
+                                      json_ietf_val), indent=2))
+        elif response.notification[0].update[0].val.string_val:
+          print(response.notification[0].update[0].val.string_val)
+        else:
+          print('JSON Format specified, but gNMI Response was not json_ietf_val')
+          print(response)
+      elif mode == 'set-update':
+        print('Performing SetRequest Update, encoding=JSON_IETF', ' to ', target,
+              ' with the following gNMI Path\n', '-'*25, '\n', paths, json_value)
+        response = _set(stub, paths, 'update', user, password, json_value)
+        print('The SetRequest response is below\n' + '-'*25 + '\n', response)
+      elif mode == 'set-replace':
+        print('Performing SetRequest Replace, encoding=JSON_IETF', ' to ', target,
+              ' with the following gNMI Path\n', '-'*25, '\n', paths)
+        response = _set(stub, paths, 'replace', user, password, json_value)
+        print('The SetRequest response is below\n' + '-'*25 + '\n', response)
+      elif mode == 'set-delete':
+        print('Performing SetRequest Delete, encoding=JSON_IETF', ' to ', target,
+              ' with the following gNMI Path\n', '-'*25, '\n', paths)
+        response = _set(stub, paths, 'delete', user, password, json_value)
+        print('The SetRequest response is below\n' + '-'*25 + '\n', response)
+      elif mode == 'subscribe':
+        request_iterator = gen_request(paths, args, prefix)
+        subscribe_start(stub, args, request_iterator)
+    except grpc.RpcError as err:
+      if err.code() == grpc.StatusCode.UNAVAILABLE:
+        print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
+              .format(err.details()))
+        sys.exit(1)
 
-  stub = _create_stub(creds, target, port, host_override)
-  if mode == 'get':
-    print('Performing GetRequest, encoding=JSON_IETF', 'to', target,
-          ' with the following gNMI Path\n', '-'*25, '\n', paths)
-    response = _get(stub, paths, user, password, prefix)
-    print('The GetResponse is below\n' + '-'*25 + '\n')
-    if form == 'protobuff':
-      print(response)
-    elif response.notification[0].update[0].val.json_ietf_val:
-      print(json.dumps(json.loads(response.notification[0].update[0].val.
-                                  json_ietf_val), indent=2))
-    elif response.notification[0].update[0].val.string_val:
-      print(response.notification[0].update[0].val.string_val)
-    else:
-      print('JSON Format specified, but gNMI Response was not json_ietf_val')
-      print(response)
-  elif mode == 'set-update':
-    print('Performing SetRequest Update, encoding=JSON_IETF', ' to ', target,
-          ' with the following gNMI Path\n', '-'*25, '\n', paths, json_value)
-    response = _set(stub, paths, 'update', user, password, json_value)
-    print('The SetRequest response is below\n' + '-'*25 + '\n', response)
-  elif mode == 'set-replace':
-    print('Performing SetRequest Replace, encoding=JSON_IETF', ' to ', target,
-          ' with the following gNMI Path\n', '-'*25, '\n', paths)
-    response = _set(stub, paths, 'replace', user, password, json_value)
-    print('The SetRequest response is below\n' + '-'*25 + '\n', response)
-  elif mode == 'set-delete':
-    print('Performing SetRequest Delete, encoding=JSON_IETF', ' to ', target,
-          ' with the following gNMI Path\n', '-'*25, '\n', paths)
-    response = _set(stub, paths, 'delete', user, password, json_value)
-    print('The SetRequest response is below\n' + '-'*25 + '\n', response)
-  elif mode == 'subscribe':
-    request_iterator = gen_request(paths, args, prefix)
-    subscribe_start(stub, args, request_iterator)
+    if not create_infinite_connections:
+        break
 
 
 if __name__ == '__main__':
