@@ -157,8 +157,10 @@ def _create_parser():
   parser.add_argument('--encoding', default=0, type=int, help='[0=JSON, 1=BYTES, 2=PROTO, 3=ASCII, 4=JSON_IETF]')
   parser.add_argument('--qos', default=0, type=int, help='')
   parser.add_argument('--use_alias', action='store_true', help='use alias')
-  parser.add_argument('--create_infinite_connections', action='store_true', help='trigger memory spike on gNMI server side'
-                      'without explicitly closing TCP connections')
+  parser.add_argument('--create_connections', type=int, nargs='?', const=1, default=1,
+                      help='Creates specific number of TCP connections with gNMI server side. '
+                      'Default number of TCP connections is 1 and use -1 to create '
+                      'infinite TCP connections.')
   parser.add_argument('--prefix', default='', help='gRPC path prefix (default: none)')
   return parser
 
@@ -468,7 +470,7 @@ def main():
   user = args['username']
   password = args['password']
   form = args['format']
-  create_infinite_connections = args['create_infinite_connections']
+  create_connections = args['create_connections']
   paths = _parse_path(_path_names(xpath))
   kwargs = {'root_cert': root_cert, 'cert_chain': cert_chain,
             'private_key': private_key}
@@ -476,6 +478,19 @@ def main():
   creds = _build_creds(target, port, get_cert, certs, notls)
 
   while True:
+    if create_connections > 0:
+        create_connections -= 1
+    elif create_connections == 0:
+        break
+    elif create_connections < -1:
+        print('''
+              Default number of TCP connections with gNMI server is 1.
+              Please use the '--create_connections <positive_number>' to
+              create TCP connections or use '--create_connections -1' to
+              create infinite TCP connections.
+              ''')
+        break
+
     try:
       stub = _create_stub(creds, target, port, host_override)
       if mode == 'get':
@@ -516,9 +531,6 @@ def main():
         print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
               .format(err.details()))
         sys.exit(1)
-
-    if not create_infinite_connections:
-        break
 
 
 if __name__ == '__main__':
