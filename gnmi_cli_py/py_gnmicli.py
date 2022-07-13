@@ -483,7 +483,7 @@ def main():
           Please use the '--create_connections <positive_number>' to
           create TCP connections or use '--create_connections -1' to
           create infinite TCP connections.
-          ''')
+          ''', file=sys.stderr)
     sys.exit(1)
 
   while True:
