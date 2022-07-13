@@ -477,18 +477,19 @@ def main():
   certs = _open_certs(**kwargs)
   creds = _build_creds(target, port, get_cert, certs, notls)
 
+  if create_connections < -1:
+    print('''
+          Default number of TCP connections with gNMI server is 1.
+          Please use the '--create_connections <positive_number>' to
+          create TCP connections or use '--create_connections -1' to
+          create infinite TCP connections.
+          ''')
+    sys.exit(1)
+
   while True:
     if create_connections > 0:
         create_connections -= 1
     elif create_connections == 0:
-        break
-    elif create_connections < -1:
-        print('''
-              Default number of TCP connections with gNMI server is 1.
-              Please use the '--create_connections <positive_number>' to
-              create TCP connections or use '--create_connections -1' to
-              create infinite TCP connections.
-              ''')
         break
 
     try:
@@ -530,7 +531,7 @@ def main():
       if err.code() == grpc.StatusCode.UNAVAILABLE:
         print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
               .format(err.details()))
-        sys.exit(1)
+        sys.exit(2)
 
 
 if __name__ == '__main__':
