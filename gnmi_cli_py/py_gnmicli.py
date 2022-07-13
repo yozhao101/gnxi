@@ -57,7 +57,8 @@ _RE_PATH_COMPONENT = re.compile(r'''
 (?P<value>.*)    # gNMI path value
 \])?$
 ''', re.VERBOSE)
-
+INVALID_GNMI_CLIENT_CONNECTION_NUMBER = 1
+GNMI_SERVER_UNAVAILABLE = 2
 
 class Error(Exception):
   """Module-level Exception class."""
@@ -484,7 +485,7 @@ def main():
           create TCP connections or use '--create_connections -1' to
           create infinite TCP connections.
           ''', file=sys.stderr)
-    sys.exit(1)
+    sys.exit(INVALID_GNMI_CLIENT_CONNECTION_NUMBER)
 
   while True:
     if create_connections > 0:
@@ -531,7 +532,7 @@ def main():
       if err.code() == grpc.StatusCode.UNAVAILABLE:
         print("Client receives an exception '{}' indicating gNMI server is shut down and Exiting ..."
               .format(err.details()))
-        sys.exit(2)
+        sys.exit(GNMI_SERVER_UNAVAILABLE)
 
 
 if __name__ == '__main__':
